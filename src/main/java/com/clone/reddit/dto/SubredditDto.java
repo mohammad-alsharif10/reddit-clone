@@ -1,5 +1,6 @@
-package com.clone.reddit.model;
+package com.clone.reddit.dto;
 
+import com.clone.reddit.model.BaseModel;
 import lombok.*;
 
 import javax.persistence.*;
@@ -14,25 +15,17 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
 @Builder
-public class Subreddit   extends  BaseModel<Long>{
+public class SubredditDto extends  BaseDto<Long>{
 
-    @NotBlank(message = "Community name is required")
+
     private String name;
 
-    @NotBlank(message = "Description is required")
     private String description;
 
-    @OneToMany(
-            mappedBy = "subreddit",
-            cascade = CascadeType.ALL,
-            targetEntity = Post.class
-    )
-    private List<Post> posts;
+    private List<PostDto> posts;
 
     private Instant createdDate;
 
-    @ManyToOne(fetch = LAZY)
-    private User user;
+    private UserDto user;
 }

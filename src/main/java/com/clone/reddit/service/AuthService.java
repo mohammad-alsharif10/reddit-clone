@@ -2,41 +2,70 @@ package com.clone.reddit.service;
 
 import com.clone.reddit.database.UserRepository;
 import com.clone.reddit.database.VerificationTokenRepository;
-import com.clone.reddit.dto.RegisterRequest;
+import com.clone.reddit.dto.AuthenticationResponse;
+import com.clone.reddit.dto.BaseDto;
+import com.clone.reddit.dto.LoginRequest;
+import com.clone.reddit.dto.RegisterRequestDto;
+import com.clone.reddit.exception.SpringRedditException;
+import com.clone.reddit.mapper.UserMapper;
 import com.clone.reddit.model.NotificationEmail;
 import com.clone.reddit.model.User;
 import com.clone.reddit.model.VerificationToken;
+import com.clone.reddit.respnse.SingleResultDto;
+import com.clone.reddit.security.JwtProvider;
+import com.clone.reddit.utils.ResponseKeys;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.data.annotation.Transient;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-@NoArgsConstructor
 public class AuthService {
 
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
-    private UserRepository userRepository;
-    private VerificationTokenRepository verificationTokenRepository;
-    private MailService mailService;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    private final UserRepository userRepository;
+
+    private final VerificationTokenRepository verificationTokenRepository;
+
+    private final MailService mailService;
+
+    private final UserMapper userMapper;
+
+    private final AuthenticationManager authenticationManager;
+
+    private final JwtProvider jwtProvider;
+
+//    public AuthService(BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository,
+//                       VerificationTokenRepository verificationTokenRepository, MailService mailService, UserMapper userMapper) {
+//        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+//        this.userRepository = userRepository;
+//        this.verificationTokenRepository = verificationTokenRepository;
+//        this.mailService = mailService;
+//        this.userMapper = userMapper;
+//    }
 
     @SneakyThrows
-    @Transient
-    public void signup(RegisterRequest registerRequest) {
+    @Transactional
+    public SingleResultDto signup(RegisterRequestDto registerRequestDto) {
         User user = User.builder()
-                .username(registerRequest.getUsername())
-                .email(registerRequest.getEmail())
-                .password(bCryptPasswordEncoder.encode(registerRequest.getPassword()))
+                .username(registerRequestDto.getUsername())
+                .email(registerRequestDto.getEmail())
+                .password(bCryptPasswordEncoder.encode(registerRequestDto.getPassword()))
                 .created(Instant.now())
                 .enabled(false)
                 .build();
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
         VerificationToken verificationToken = generateVerificationToken(user);
         mailService.sendMail(NotificationEmail.builder()
                 .body("Activate your Account")
@@ -45,7 +74,12 @@ public class AuthService {
                         "please click on the below url to activate your account : " +
                         "http://localhost:8080/api/auth/accountVerification/" + verificationToken.getToken())
                 .build());
+        return getSingleResultDto(
+                userMapper.toBaseDto(savedUser),
+                ResponseKeys.REGISTERED_SUCCESSFULLY,
+                false, ResponseKeys.SUCCESS_RESPONSE);
     }
+
 
     private VerificationToken generateVerificationToken(User user) {
         String token = UUID.randomUUID().toString();
@@ -54,6 +88,52 @@ public class AuthService {
                 .token(token)
                 .build();
         return verificationTokenRepository.save(verificationToken);
+    }
+
+
+    public SingleResultDto verifyAccount(String token) throws SpringRedditException {
+        Optional<VerificationToken> verificationToken = verificationTokenRepository.findByToken(token);
+        if (verificationToken.isPresent()) {
+            return getSingleResultDto(
+                    userMapper.toBaseDto(fetchUserAndEnable(verificationToken.get()))
+                    , ResponseKeys.VERIFIED_SUCCESSFULLY
+                    , false, ResponseKeys.SUCCESS_RESPONSE);
+        }
+        return getSingleResultDto
+                (null, ResponseKeys.VERIFYING_ERROR, true, ResponseKeys.EXCEPTION_RESPONSE);
+    }
+
+    private User fetchUserAndEnable(VerificationToken verificationToken) throws SpringRedditException {
+        String username = verificationToken.getUser().getUsername();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new SpringRedditException("User not found with name - " + username));
+        user.setEnabled(true);
+        return userRepository.save(user);
+    }
+
+    public SingleResultDto login(LoginRequest loginRequest) {
+        Authentication authenticate = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authenticate);
+        String token = jwtProvider.generateToken(authenticate);
+        AuthenticationResponse authenticationResponse = AuthenticationResponse.builder()
+                .authenticationToken(token)
+//                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .username(loginRequest.getUsername())
+                .build();
+        System.out.println(authenticationResponse);
+        return getSingleResultDto(authenticationResponse, ResponseKeys.REGISTERED_SUCCESSFULLY, false, ResponseKeys.SUCCESS_RESPONSE);
+    }
+
+    private <T extends BaseDto<Long>> SingleResultDto getSingleResultDto(T t, String message, boolean error, Integer responseStatus) {
+        return SingleResultDto.builder()
+                .baseDto(t)
+                .responseStatus(responseStatus)
+                .message(message)
+                .errorStatus(error)
+                .build();
     }
 
 

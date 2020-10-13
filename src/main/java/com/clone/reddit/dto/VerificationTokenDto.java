@@ -1,5 +1,6 @@
-package com.clone.reddit.model;
+package com.clone.reddit.dto;
 
+import com.clone.reddit.model.BaseModel;
 import lombok.*;
 
 import javax.persistence.*;
@@ -12,16 +13,14 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
 @Builder
 @Table(name = "token")
-public class VerificationToken   extends  BaseModel<Long>{
+public class VerificationTokenDto extends BaseDto<Long> {
 
 
     private String token;
 
-    @OneToOne(fetch = LAZY)
-    private User user;
+    private UserDto user;
 
     private Instant expiryDate;
 }

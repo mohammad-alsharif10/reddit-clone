@@ -1,5 +1,6 @@
-package com.clone.reddit.model;
+package com.clone.reddit.dto;
 
+import com.clone.reddit.model.BaseModel;
 import lombok.*;
 
 import javax.persistence.Entity;
@@ -10,11 +11,11 @@ import java.time.Instant;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class RefreshToken   extends  BaseModel<Long>{
+public class RefreshTokenDto extends  BaseDto<Long> {
+
     private String token;
     private Instant createdDate;
 }

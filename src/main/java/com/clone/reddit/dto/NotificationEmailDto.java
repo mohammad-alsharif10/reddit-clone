@@ -1,5 +1,6 @@
-package com.clone.reddit.model;
+package com.clone.reddit.dto;
 
+import com.clone.reddit.model.BaseModel;
 import lombok.*;
 
 @EqualsAndHashCode(callSuper = true)
@@ -7,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class NotificationEmail  extends  BaseModel<Long>{
+public class NotificationEmailDto extends  BaseDto<Long> {
     private String subject;
     private String recipient;
     private String body;

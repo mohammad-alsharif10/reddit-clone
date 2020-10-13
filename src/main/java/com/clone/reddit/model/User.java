@@ -1,9 +1,6 @@
 package com.clone.reddit.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -15,15 +12,14 @@ import java.time.Instant;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = IDENTITY)
-    private Long userId;
+public class User   extends  BaseModel<Long>{
+
 
     @NotBlank(message = "Username is required")
     private String username;

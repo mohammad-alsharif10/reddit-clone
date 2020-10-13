@@ -23,7 +23,7 @@ class MailService {
     void sendMail(NotificationEmail notificationEmail) throws SpringRedditException {
         MimeMessagePreparator messagePreparation = mimeMessage -> {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
-            messageHelper.setFrom("mohammad-alsharif10@outlook.com");
+            messageHelper.setFrom("eng100shevoo@gmail.com");
             messageHelper.setTo(notificationEmail.getRecipient());
             messageHelper.setSubject(notificationEmail.getSubject());
             messageHelper.setText(notificationEmail.getBody());

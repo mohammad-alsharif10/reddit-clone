@@ -12,22 +12,23 @@ import java.time.Instant;
 import static javax.persistence.FetchType.LAZY;
 import static javax.persistence.GenerationType.IDENTITY;
 
-@Data
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Builder
-public class Comment {
-    @Id
-    @GeneratedValue(strategy = IDENTITY)
-    private Long id;
+public class Comment extends  BaseModel<Long>{
+
     @NotEmpty
     private String text;
+
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "postId", referencedColumnName = "postId")
+    @JoinColumn(name = "post_id", referencedColumnName = "id")
     private Post post;
+
     private Instant createdDate;
+
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "userId", referencedColumnName = "userId")
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 }
