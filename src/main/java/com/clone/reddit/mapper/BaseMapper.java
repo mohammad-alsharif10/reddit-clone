@@ -6,7 +6,7 @@ import com.clone.reddit.model.BaseModel;
 import java.io.Serializable;
 import java.util.List;
 
-public interface BaseMapper<ID extends Serializable, baseDto extends BaseDto<ID>, baseModel extends BaseModel<ID>> {
+public interface BaseMapper<ID extends Serializable, baseDto extends BaseDto, baseModel extends BaseModel<ID>> {
 
     baseDto toBaseDto(baseModel baseModelPram);
 

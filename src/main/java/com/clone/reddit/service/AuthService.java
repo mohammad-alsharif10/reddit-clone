@@ -3,7 +3,6 @@ package com.clone.reddit.service;
 import com.clone.reddit.database.UserRepository;
 import com.clone.reddit.database.VerificationTokenRepository;
 import com.clone.reddit.dto.AuthenticationResponse;
-import com.clone.reddit.dto.BaseDto;
 import com.clone.reddit.dto.LoginRequest;
 import com.clone.reddit.dto.RegisterRequestDto;
 import com.clone.reddit.exception.SpringRedditException;
@@ -11,8 +10,9 @@ import com.clone.reddit.mapper.UserMapper;
 import com.clone.reddit.model.NotificationEmail;
 import com.clone.reddit.model.User;
 import com.clone.reddit.model.VerificationToken;
-import com.clone.reddit.respnse.SingleResultDto;
+import com.clone.reddit.respnse.SingleResultResponse;
 import com.clone.reddit.security.JwtProvider;
+import com.clone.reddit.utils.Common;
 import com.clone.reddit.utils.ResponseKeys;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -46,18 +46,11 @@ public class AuthService {
 
     private final JwtProvider jwtProvider;
 
-//    public AuthService(BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository,
-//                       VerificationTokenRepository verificationTokenRepository, MailService mailService, UserMapper userMapper) {
-//        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-//        this.userRepository = userRepository;
-//        this.verificationTokenRepository = verificationTokenRepository;
-//        this.mailService = mailService;
-//        this.userMapper = userMapper;
-//    }
+    private final RefreshTokenService refreshTokenService;
 
     @SneakyThrows
     @Transactional
-    public SingleResultDto signup(RegisterRequestDto registerRequestDto) {
+    public SingleResultResponse signup(RegisterRequestDto registerRequestDto) {
         User user = User.builder()
                 .username(registerRequestDto.getUsername())
                 .email(registerRequestDto.getEmail())
@@ -74,7 +67,7 @@ public class AuthService {
                         "please click on the below url to activate your account : " +
                         "http://localhost:8080/api/auth/accountVerification/" + verificationToken.getToken())
                 .build());
-        return getSingleResultDto(
+        return Common.getSingleResultDto(
                 userMapper.toBaseDto(savedUser),
                 ResponseKeys.REGISTERED_SUCCESSFULLY,
                 false, ResponseKeys.SUCCESS_RESPONSE);
@@ -91,15 +84,15 @@ public class AuthService {
     }
 
 
-    public SingleResultDto verifyAccount(String token) throws SpringRedditException {
+    public SingleResultResponse verifyAccount(String token) throws SpringRedditException {
         Optional<VerificationToken> verificationToken = verificationTokenRepository.findByToken(token);
         if (verificationToken.isPresent()) {
-            return getSingleResultDto(
+            return Common.getSingleResultDto(
                     userMapper.toBaseDto(fetchUserAndEnable(verificationToken.get()))
                     , ResponseKeys.VERIFIED_SUCCESSFULLY
                     , false, ResponseKeys.SUCCESS_RESPONSE);
         }
-        return getSingleResultDto
+        return Common.getSingleResultDto
                 (null, ResponseKeys.VERIFYING_ERROR, true, ResponseKeys.EXCEPTION_RESPONSE);
     }
 
@@ -110,7 +103,7 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public SingleResultDto login(LoginRequest loginRequest) {
+    public SingleResultResponse login(LoginRequest loginRequest) {
         Authentication authenticate = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsername(),
@@ -119,21 +112,12 @@ public class AuthService {
         String token = jwtProvider.generateToken(authenticate);
         AuthenticationResponse authenticationResponse = AuthenticationResponse.builder()
                 .authenticationToken(token)
-//                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
                 .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
                 .username(loginRequest.getUsername())
                 .build();
         System.out.println(authenticationResponse);
-        return getSingleResultDto(authenticationResponse, ResponseKeys.REGISTERED_SUCCESSFULLY, false, ResponseKeys.SUCCESS_RESPONSE);
-    }
-
-    private <T extends BaseDto<Long>> SingleResultDto getSingleResultDto(T t, String message, boolean error, Integer responseStatus) {
-        return SingleResultDto.builder()
-                .baseDto(t)
-                .responseStatus(responseStatus)
-                .message(message)
-                .errorStatus(error)
-                .build();
+        return Common.getSingleResultDto(authenticationResponse, ResponseKeys.REGISTERED_SUCCESSFULLY, false, ResponseKeys.SUCCESS_RESPONSE);
     }
 
 

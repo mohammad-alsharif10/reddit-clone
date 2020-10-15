@@ -16,4 +16,5 @@ public class ResponseKeys {
     public static final String INVALID_ACCESS_TOKEN = "INVALID_ACCESS_TOKEN";
     public static final String VERIFIED_SUCCESSFULLY = "Verified Successfully";
     public static final String VERIFYING_ERROR = "Verifying Error";
+    public static final String FOUND_IT = "Found it";
 }

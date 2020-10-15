@@ -3,12 +3,14 @@ package com.clone.reddit.model;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotBlank;
 import java.time.Instant;
 
 import static javax.persistence.FetchType.LAZY;
-import static javax.persistence.GenerationType.IDENTITY;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -37,7 +39,7 @@ public class Post   extends  BaseModel<Long>{
 
     private Instant createdDate;
 
-    @ManyToOne(fetch = LAZY)
-//    @JoinColumn(name = "subreddit_id", referencedColumnName = "id")
+    @ManyToOne(fetch = LAZY, targetEntity = Subreddit.class)
+    @JoinColumn(name = "subreddit_id", referencedColumnName = "id")
     private Subreddit subreddit;
 }

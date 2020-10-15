@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class VoteDto extends BaseDto<Long> {
+public class VoteDto extends BaseDto {
 
 
     private VoteType voteType;

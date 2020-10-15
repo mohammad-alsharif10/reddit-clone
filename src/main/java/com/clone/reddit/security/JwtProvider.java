@@ -3,8 +3,6 @@ package com.clone.reddit.security;
 import com.clone.reddit.exception.SpringRedditException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -20,21 +18,22 @@ import java.time.Instant;
 import java.util.Date;
 
 import static io.jsonwebtoken.Jwts.parser;
-import static java.util.Date.from;
 
 @Service
 public class JwtProvider {
 
     private KeyStore keyStore;
+
     @Value("${jwt.expiration.time}")
     private Long jwtExpirationInMillis;
 
+    @SneakyThrows
     @PostConstruct
-    public void init() throws IOException, CertificateException, SpringRedditException {
+    public void init() {
         try {
             keyStore = KeyStore.getInstance("JKS");
-            InputStream resourceAsStream = getClass().getResourceAsStream("/keystore.jks");
-            keyStore.load(resourceAsStream, "hggih;fv10".toCharArray());
+            InputStream resourceAsStream = getClass().getResourceAsStream("/security.jks");
+            keyStore.load(resourceAsStream, "password".toCharArray());
         } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
             throw new SpringRedditException("Exception occurred while loading keystore", e);
         }
@@ -43,11 +42,10 @@ public class JwtProvider {
 
     public String generateToken(Authentication authentication) {
         User principal = (User) authentication.getPrincipal();
-        PrivateKey privateKey = getPrivateKey();
         return Jwts.builder()
                 .setSubject(principal.getUsername())
                 .setIssuedAt(Date.from(Instant.now()))
-                .signWith(Keys.secretKeyFor(SignatureAlgorithm.HS512))
+                .signWith(getPrivateKey())
                 .setExpiration(Date.from(Instant.now().plusMillis(jwtExpirationInMillis)))
                 .compact();
     }
@@ -55,24 +53,19 @@ public class JwtProvider {
     public String generateTokenWithUserName(String username) {
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(from(Instant.now()))
+                .setIssuedAt(Date.from(Instant.now()))
                 .signWith(getPrivateKey())
                 .setExpiration(Date.from(Instant.now().plusMillis(jwtExpirationInMillis)))
                 .compact();
     }
 
-
+    @SneakyThrows
     private PrivateKey getPrivateKey() {
         try {
-            return (PrivateKey) keyStore.getKey("keystore", "hggih;fv10".toCharArray());
-        } catch (Exception e) {
-            try {
-                throw new SpringRedditException("Exception occurred while retrieving public key from keystore", e);
-            } catch (SpringRedditException springRedditException) {
-                springRedditException.printStackTrace();
-            }
+            return (PrivateKey) keyStore.getKey("security", "password".toCharArray());
+        } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+            throw new SpringRedditException("Exception occurred while retrieving public key from keystore", e);
         }
-        return null;
     }
 
     public boolean validateToken(String jwt) {
@@ -83,7 +76,7 @@ public class JwtProvider {
     @SneakyThrows
     private PublicKey getPublicKey() {
         try {
-            return keyStore.getCertificate("keystore").getPublicKey();
+            return keyStore.getCertificate("security").getPublicKey();
         } catch (KeyStoreException e) {
             throw new SpringRedditException("Exception occurred while " +
                     "retrieving public key from keystore", e);
@@ -95,7 +88,6 @@ public class JwtProvider {
                 .setSigningKey(getPublicKey())
                 .parseClaimsJws(token)
                 .getBody();
-
         return claims.getSubject();
     }
 

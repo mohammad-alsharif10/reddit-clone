@@ -10,7 +10,7 @@ import java.time.Instant;
 @Builder
 @Getter
 @Setter
-public class AuthenticationResponse extends BaseDto<Long> {
+public class AuthenticationResponse extends BaseDto {
     private String authenticationToken;
     private String refreshToken;
     private Instant expiresAt;

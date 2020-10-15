@@ -10,7 +10,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CommentDto extends BaseDto<Long> {
+public class CommentDto extends BaseDto {
 
     private String text;
 

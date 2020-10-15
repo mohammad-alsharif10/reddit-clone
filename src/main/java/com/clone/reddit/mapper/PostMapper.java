@@ -6,6 +6,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring", uses = {UserMapper.class, SubredditMapper.class})
 public interface PostMapper extends BaseMapper<Long, PostDto, Post> {
 
@@ -14,4 +16,13 @@ public interface PostMapper extends BaseMapper<Long, PostDto, Post> {
             @Mapping(target = "subreddit", ignore = true),
     })
     PostDto toBaseDto(Post baseModelPram);
+
+    @Override
+    Post toBaseEntity(PostDto baseDtoPram);
+
+    @Override
+    List<PostDto> toBaseDtoList(List<Post> posts);
+
+    @Override
+    List<Post> toBaseEntityList(List<PostDto> postDtos);
 }

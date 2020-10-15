@@ -9,7 +9,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserDto extends BaseDto<Long> {
+public class UserDto extends BaseDto {
 
 
     private String username;

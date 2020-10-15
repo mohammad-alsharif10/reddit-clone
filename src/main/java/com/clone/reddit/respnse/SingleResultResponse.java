@@ -1,17 +1,18 @@
 package com.clone.reddit.respnse;
 
 
-import com.clone.reddit.dto.BaseDto;
 import lombok.*;
+
+import java.io.Serializable;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Getter
 @Setter
-public class SingleResultDto {
+public class SingleResultResponse implements Serializable {
 
-    private BaseDto baseDto;
+    private Object data;
     private boolean errorStatus;
     private Integer responseStatus;
     private String message;
